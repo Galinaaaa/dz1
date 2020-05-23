@@ -1,0 +1,41 @@
+RewriteEngine on
+
+/*CWE-242
+Позволет определить реальные имена реальных параметров серверных сценариев, в которых подставляются значения из правил перезаписи
+*/
+
+RewriteRule ^(\w+)$ index.php?page=$1 [L,NC,QSA]
+RewriteCond %{HTTPS} on
+RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+SetEnvIfNoCase User-Agent "YandexBot" bad_bot
+SetEnvIfNoCase User-Agent "GoogleBot" bad_bot
+SetEnvIfNoCase User-Agent "Google" bad_bot
+SetEnvIfNoCase User-Agent "Yandex" bad_bot
+
+/*CWE-290, CWE-291 опора на IP-адрес для аутентификации, обход аутентификации с помощью спуфинга
+При подмене IP адреса возможно получение доступа к файлам
+Использовать deny from all, чтобы доступ к файлу имело только приложение, а не пользователи
+*/
+
+<Files sitemap.xml>
+	order deny,allow
+	Deny from all
+	Allow from env=bad_bot
+	Allow from 91.77.67.228
+</Files>
+<Files robots.txt>
+	order deny,allow
+	Deny from all
+	Allow from env=bad_bot
+	Allow from 91.77.67.228
+</Files>
+<Files prices.txt>
+	order deny,allow
+	Deny from all
+</Files>
+<FilesMatch "^(TopMenu|db|modals|TournList|Tournament)\.php$">
+	Deny from all
+</FilesMatch>
+
+ErrorDocument 404 /404.html
+Options -Indexes
